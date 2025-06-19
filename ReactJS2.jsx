@@ -1,99 +1,109 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useEffect, useState } from 'react';
+import { getAuthors, createAuthor, updateAuthor, deleteAuthor } from '../services/authorService';
 
-const GenreAdmin = () => {
-  const [genres, setGenres] = useState([]);
-  const [newGenre, setNewGenre] = useState('');
+const AuthorAdmin = () => {
+  const [authors, setAuthors] = useState([]);
+  const [newAuthor, setNewAuthor] = useState('');
   const [editId, setEditId] = useState(null);
   const [editName, setEditName] = useState('');
 
   useEffect(() => {
-    fetchGenres();
+    fetchAuthors();
   }, []);
 
-  const fetchGenres = async () => {
+  const fetchAuthors = async () => {
     try {
-      const res = await axios.get('/api/genres');
-      setGenres(res.data);
+      const res = await getAuthors();
+      setAuthors(res.data);
     } catch (err) {
-      console.error('Gagal mengambil data genre', err);
+      console.error('Gagal memuat data author:', err);
     }
   };
 
   const handleAdd = async () => {
-    if (!newGenre.trim()) return;
-    await axios.post('/api/genres', { name: newGenre });
-    setNewGenre('');
-    fetchGenres();
+    if (!newAuthor.trim()) return;
+    try {
+      await createAuthor({ name: newAuthor });
+      setNewAuthor('');
+      fetchAuthors();
+    } catch (err) {
+      console.error('Gagal menambahkan author:', err);
+    }
   };
 
-  const handleDelete = async (id) => {
-    await axios.delete(`/api/genres/${id}`);
-    fetchGenres();
-  };
-
-  const handleEdit = (genre) => {
-    setEditId(genre.id);
-    setEditName(genre.name);
+  const handleEdit = (author) => {
+    setEditId(author.id);
+    setEditName(author.name);
   };
 
   const handleUpdate = async () => {
-    await axios.put(`/api/genres/${editId}`, { name: editName });
-    setEditId(null);
-    setEditName('');
-    fetchGenres();
+    try {
+      await updateAuthor(editId, { name: editName });
+      setEditId(null);
+      setEditName('');
+      fetchAuthors();
+    } catch (err) {
+      console.error('Gagal mengupdate author:', err);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await deleteAuthor(id);
+      fetchAuthors();
+    } catch (err) {
+      console.error('Gagal menghapus author:', err);
+    }
   };
 
   return (
     <div>
-      <h2>Genre</h2>
+      <h2>Author Admin</h2>
+      <input
+        type="text"
+        value={newAuthor}
+        onChange={(e) => setNewAuthor(e.target.value)}
+        placeholder="Nama Author Baru"
+      />
+      <button onClick={handleAdd}>Tambah</button>
 
-      <table border="1">
+      <table>
         <thead>
           <tr>
             <th>ID</th>
-            <th>Nama Genre</th>
+            <th>Nama</th>
             <th>Aksi</th>
           </tr>
         </thead>
         <tbody>
-          {genres.map((genre) => (
-            <tr key={genre.id}>
-              <td>{genre.id}</td>
+          {authors.map((author) => (
+            <tr key={author.id}>
+              <td>{author.id}</td>
               <td>
-                {editId === genre.id ? (
+                {editId === author.id ? (
                   <input
                     type="text"
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
                   />
                 ) : (
-                  genre.name
+                  author.name
                 )}
               </td>
               <td>
-                {editId === genre.id ? (
+                {editId === author.id ? (
                   <button onClick={handleUpdate}>Simpan</button>
                 ) : (
-                  <button onClick={() => handleEdit(genre)}>Edit</button>
+                  <button onClick={() => handleEdit(author)}>Edit</button>
                 )}
-                <button onClick={() => handleDelete(genre.id)}>Hapus</button>
+                <button onClick={() => handleDelete(author.id)}>Hapus</button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-
-      <h3>Tambah Genre Baru</h3>
-      <input
-        type="text"
-        value={newGenre}
-        onChange={(e) => setNewGenre(e.target.value)}
-        placeholder="Nama Genre"
-      />
-      <button onClick={handleAdd}>Tambah</button>
     </div>
   );
 };
 
-export default GenreAdmin;
+export default AuthorAdmin;
